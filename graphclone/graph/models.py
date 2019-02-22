@@ -57,13 +57,38 @@ class Graph(object):
     # TODO validate if entities is list
     for e in entities:
       # TODO validate if entity object has the correct structure
-      entity = Entity(e.get('id'), e.get('name'), e.get('description'))
+      entity = Entity(e.get('entity_id'), e.get('name'), e.get('description'))
       graph.add_entity(entity)
     
     for link in links:
       graph.link_entities_by_id(link.get('from'), link.get('to'))
     
     return graph
+
+  def to_dict(self):
+    json_dict = {
+      'entities': [],
+      'links': [],
+    }
+
+    for entity_id in self.entities:
+      entity = self.entities[entity_id]
+      entity_dict = {
+        'entity_id': entity.id,
+        'name': entity.name,
+      }
+      if entity.description is not None:
+        entity_dict['description'] = entity.description
+      
+      json_dict['entities'].append(entity_dict)
+      
+      for successor in entity.successors:
+        json_dict['links'].append({
+          'from': entity.id,
+          'to': successor.id
+        })
+    
+    return json_dict
 
 
 class Entity(object):
