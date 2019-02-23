@@ -135,7 +135,11 @@ class Graph(object):
       
       json_dict['entities'].append(entity_dict)
       
-      for successor in entity.successors:
+
+      successors = (entity.get_sorted_successors() 
+                  if self.sort_links 
+                  else entity.successors)
+      for successor in successors:
         json_dict['links'].append({
           'from': entity.id,
           'to': successor.id

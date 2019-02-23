@@ -1,0 +1,64 @@
+{
+    "entities": [
+        {
+            "entity_id": 3,
+            "name": "EntityA"
+        },
+        {
+            "entity_id": 5,
+            "name": "EntityB"
+        },
+        {
+            "description": "More details about entity C",
+            "entity_id": 7,
+            "name": "EntityC"
+        },
+        {
+            "entity_id": 11,
+            "name": "EntityD"
+        },
+        {
+            "entity_id": 12,
+            "name": "EntityB"
+        },
+        {
+            "description": "More details about entity C",
+            "entity_id": 13,
+            "name": "EntityC"
+        },
+        {
+            "entity_id": 14,
+            "name": "EntityD"
+        }
+    ],
+    "links": [
+        {
+            "from": 3,
+            "to": 5
+        },
+        {
+            "from": 3,
+            "to": 7
+        },
+        {
+            "from": 3,
+            "to": 12
+        },
+        {
+            "from": 5,
+            "to": 7
+        },
+        {
+            "from": 7,
+            "to": 11
+        },
+        {
+            "from": 12,
+            "to": 13
+        },
+        {
+            "from": 13,
+            "to": 14
+        }
+    ]
+}
