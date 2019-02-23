@@ -394,3 +394,77 @@ class TestGraphToDict(TestCase):
         { 'from': 2, 'to': 3 }
       ],
     })
+
+
+class TestGraphClone(TestCase):
+
+  def test_graph_clone_when_graph_is_empty(self):
+    graph = Graph.from_dict({})
+    graph.clone(1)
+    self.assertDictEqual(graph.to_dict(), {
+      'entities': [],
+      'links': []
+    })
+
+  def test_graph_clone_when_provided_id_doesnt_exist_in_graph(self):
+    input_dict = {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' }
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 }
+      ]
+    }
+    graph = Graph.from_dict(input_dict)
+    graph.clone(3)
+    self.assertDictEqual(graph.to_dict(), input_dict)
+
+  def test_graph_clone_when_provided_id_exists_in_graph(self):
+    graph = Graph.from_dict({
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2', 'description': 'test' }
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 }
+      ]
+    })
+    graph.clone(2)
+
+    self.assertDictEqual(graph.to_dict(), {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2', 'description': 'test' },
+        { 'entity_id': 3, 'name': 'E2', 'description': 'test' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+        { 'from': 1, 'to': 3 },
+      ]
+    })
+
+  def test_graph_clone_when_provided_entity_is_isolated(self):
+    graph = Graph.from_dict({
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 }
+      ]
+    })
+    graph.clone(3)
+
+    self.assertDictEqual(graph.to_dict(), {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E3' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+      ]
+    })

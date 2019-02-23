@@ -62,7 +62,10 @@ class Graph(object):
   
   def clone(self, entity_id):
     # TODO raise error if entity_id doesn't exist in graph
-    root_entity = self.entities[entity_id]
+    root_entity = self.entities.get(entity_id)
+    if root_entity is None:
+      return
+    
     new_subgraph_root_entity = self.copy_subgraph(root_entity, {})
     
     for predecessor in root_entity.predecessors:
@@ -71,8 +74,7 @@ class Graph(object):
   def copy_subgraph(self, root_entity, visited_entities):
 
     if root_entity.id in visited_entities:
-      # stop recursion
-      # returns cloned version of the entity
+      # stop recursion and return cloned version of the entity
       return visited_entities[root_entity.id]
     
     new_entity = self.copy_and_add_entity(root_entity)
