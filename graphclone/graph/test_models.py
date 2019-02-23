@@ -296,13 +296,32 @@ def test_from_dict_when_entity_has_multiple_links(self):
     self.assert_links(e3, predecessors=set([e1, e2]))
 
 
-class TestGraphToDict(TestCase):
+class AssertGraphDictMixin(object):
+
+  def assert_graph_dict(self, graph_dict, expected_dict):
+    self.assertDictEqual(
+      AssertGraphDictMixin._sort_dict(graph_dict),
+      AssertGraphDictMixin._sort_dict(expected_dict)
+    )
+
+  @staticmethod
+  def _sort_dict(a_dict):
+    return {
+      'entities': sorted(
+        a_dict.get('entities', []), 
+        key=lambda e: e['entity_id']),
+      'links': sorted(
+        a_dict.get('links', []), 
+        key=lambda e: "{}->{}".format(e['from'], e['to']))
+    }
+
+
+class TestGraphToDict(TestCase, AssertGraphDictMixin):
 
   def test_to_dict_when_no_entities_exist(self):
     graph = Graph()
     json_dict = graph.to_dict()
-
-    self.assertDictEqual(json_dict, {
+    self.assert_graph_dict(json_dict, {
       'entities': [],
       'links': [],
     })
@@ -317,7 +336,7 @@ class TestGraphToDict(TestCase):
 
     json_dict = graph.to_dict()
 
-    self.assertDictEqual(json_dict, {
+    self.assert_graph_dict(json_dict, {
       'entities': [
         { 'entity_id': 1, 'name': 'E1', 'description': 'D1' },
         { 'entity_id': 2, 'name': 'E2' }
@@ -336,7 +355,7 @@ class TestGraphToDict(TestCase):
 
     json_dict = graph.to_dict()
 
-    self.assertDictEqual(json_dict, {
+    self.assert_graph_dict(json_dict, {
       'entities': [
         { 'entity_id': 1, 'name': 'E1' },
         { 'entity_id': 2, 'name': 'E2' }
@@ -358,7 +377,7 @@ class TestGraphToDict(TestCase):
 
     json_dict = graph.to_dict()
 
-    self.assertDictEqual(json_dict, {
+    self.assert_graph_dict(json_dict, {
       'entities': [
         { 'entity_id': 1, 'name': 'E1' },
         { 'entity_id': 2, 'name': 'E2' }
@@ -383,7 +402,7 @@ class TestGraphToDict(TestCase):
 
     json_dict = graph.to_dict()
 
-    self.assertDictEqual(json_dict, {
+    self.assert_graph_dict(json_dict, {
       'entities': [
         { 'entity_id': 1, 'name': 'E1' },
         { 'entity_id': 2, 'name': 'E2' },
@@ -396,12 +415,15 @@ class TestGraphToDict(TestCase):
     })
 
 
-class TestGraphClone(TestCase):
+class TestGraphClone(TestCase, AssertGraphDictMixin):
+
+  def setUp(self):
+    self.maxDiff = None
 
   def test_graph_clone_when_graph_is_empty(self):
     graph = Graph.from_dict({})
     graph.clone(1)
-    self.assertDictEqual(graph.to_dict(), {
+    self.assert_graph_dict(graph.to_dict(), {
       'entities': [],
       'links': []
     })
@@ -418,7 +440,7 @@ class TestGraphClone(TestCase):
     }
     graph = Graph.from_dict(input_dict)
     graph.clone(3)
-    self.assertDictEqual(graph.to_dict(), input_dict)
+    self.assert_graph_dict(graph.to_dict(), input_dict)
 
   def test_graph_clone_when_provided_id_exists_in_graph(self):
     graph = Graph.from_dict({
@@ -432,15 +454,15 @@ class TestGraphClone(TestCase):
     })
     graph.clone(2)
 
-    self.assertDictEqual(graph.to_dict(), {
+    self.assert_graph_dict(graph.to_dict(), {
       'entities': [
         { 'entity_id': 1, 'name': 'E1' },
         { 'entity_id': 2, 'name': 'E2', 'description': 'test' },
         { 'entity_id': 3, 'name': 'E2', 'description': 'test' },
       ],
       'links': [
-        { 'from': 1, 'to': 2 },
         { 'from': 1, 'to': 3 },
+        { 'from': 1, 'to': 2 },
       ]
     })
 
@@ -457,7 +479,7 @@ class TestGraphClone(TestCase):
     })
     graph.clone(3)
 
-    self.assertDictEqual(graph.to_dict(), {
+    self.assert_graph_dict(graph.to_dict(), {
       'entities': [
         { 'entity_id': 1, 'name': 'E1' },
         { 'entity_id': 2, 'name': 'E2' },
@@ -466,5 +488,149 @@ class TestGraphClone(TestCase):
       ],
       'links': [
         { 'from': 1, 'to': 2 },
+      ]
+    })
+
+  def test_graph_clone_when_provided_entity_has_multiple_links(self):
+    graph = Graph.from_dict({
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+        { 'entity_id': 5, 'name': 'E5' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 3 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 3, 'to': 5 }
+      ]
+    }, sort_links=True)
+    graph.clone(3)
+
+    self.assert_graph_dict(graph.to_dict(), {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+        { 'entity_id': 5, 'name': 'E5' },
+        # Cloned
+        { 'entity_id': 6, 'name': 'E3' },
+        { 'entity_id': 7, 'name': 'E4' },
+        { 'entity_id': 8, 'name': 'E5' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 3 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 3, 'to': 5 },
+        # Cloned
+        { 'from': 1, 'to': 6 },
+        { 'from': 2, 'to': 6 },
+        { 'from': 6, 'to': 7 },
+        { 'from': 6, 'to': 8 },
+      ]
+    })
+  
+  def test_graph_clone_when_provided_entity_is_in_a_loop(self):
+    graph = Graph.from_dict({
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 4, 'to': 2 }
+      ]
+    })
+    graph.clone(3)
+
+    self.assert_graph_dict(graph.to_dict(), {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+        # Cloned
+        { 'entity_id': 5, 'name': 'E3' },
+        { 'entity_id': 6, 'name': 'E4' },
+        { 'entity_id': 7, 'name': 'E2' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 4, 'to': 2 },
+        # Cloned
+        { 'from': 2, 'to': 5 }, # connects the new subgraph
+        { 'from': 5, 'to': 6 },
+        { 'from': 6, 'to': 7 },
+        { 'from': 7, 'to': 5 },
+      ]
+    })
+
+  def test_graph_clone_when_graph_has_multiple_loops(self):
+    graph = Graph.from_dict({
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+        { 'entity_id': 5, 'name': 'E5' },
+        { 'entity_id': 6, 'name': 'E6' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 4, 'to': 2 },
+        { 'from': 4, 'to': 5 },
+        { 'from': 5, 'to': 6 },
+        { 'from': 6, 'to': 4 },
+      ]
+    })
+    graph.clone(3)
+
+    self.assert_graph_dict(graph.to_dict(), {
+      'entities': [
+        { 'entity_id': 1, 'name': 'E1' },
+        { 'entity_id': 2, 'name': 'E2' },
+        { 'entity_id': 3, 'name': 'E3' },
+        { 'entity_id': 4, 'name': 'E4' },
+        { 'entity_id': 5, 'name': 'E5' },
+        { 'entity_id': 6, 'name': 'E6' },
+        # Cloned
+        { 'entity_id': 7, 'name': 'E3' },
+        # Loop 1
+        { 'entity_id': 8, 'name': 'E4' },
+        { 'entity_id': 9, 'name': 'E2' },
+        # Loop 2
+        { 'entity_id': 10, 'name': 'E5' },
+        { 'entity_id': 11, 'name': 'E6' },
+      ],
+      'links': [
+        { 'from': 1, 'to': 2 },
+        { 'from': 2, 'to': 3 },
+        { 'from': 3, 'to': 4 },
+        { 'from': 4, 'to': 2 },
+        { 'from': 4, 'to': 5 },
+        { 'from': 5, 'to': 6 },
+        { 'from': 6, 'to': 4 },
+        # Cloned
+        { 'from': 2, 'to': 7 }, # connects the new subgraph
+        # Loop 1
+        { 'from': 7, 'to': 8 },
+        { 'from': 8, 'to': 9 },
+        { 'from': 9, 'to': 7 },
+        # Loop 2
+        { 'from': 8, 'to': 10 },
+        { 'from': 10, 'to': 11 },
+        { 'from': 11, 'to': 8 },
       ]
     })

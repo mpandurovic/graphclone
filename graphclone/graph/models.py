@@ -11,11 +11,17 @@ class Entity(object):
 
   def __repr__(self):
     return "Entity[{}, {}]".format(self.id, self.name)
+
+  def get_sorted_successors(self, get_sorted=False):
+    return sorted(self.successors, key=lambda e: e.id)
   
   def add_successor(self, successor):
     if successor is None:
       return
     self.successors.add(successor)
+
+  def get_sorted_predecessors(self, get_sorted=False):
+    return sorted(self.predecessors, key=lambda e: e.id)
   
   def add_predecessor(self, predecessor):
     if predecessor is None:
@@ -31,9 +37,10 @@ class Entity(object):
 
 class Graph(object):
 
-  def __init__(self):
+  def __init__(self, sort_links=False):
     self.entities = {}
     self.next_entity_id = 1
+    self.sort_links = True
 
   def add_entity(self, entity):
     if entity is None:
@@ -68,7 +75,10 @@ class Graph(object):
     
     new_subgraph_root_entity = self.copy_subgraph(root_entity, {})
     
-    for predecessor in root_entity.predecessors:
+    predecessors = (root_entity.get_sorted_predecessors() 
+                  if self.sort_links 
+                  else root_entity.predecessors)
+    for predecessor in predecessors:
       predecessor.add_successor(new_subgraph_root_entity)
 
   def copy_subgraph(self, root_entity, visited_entities):
@@ -78,19 +88,23 @@ class Graph(object):
       return visited_entities[root_entity.id]
     
     new_entity = self.copy_and_add_entity(root_entity)
-    for successor in root_entity.successors:
+    visited_entities[root_entity.id] = new_entity
+
+    successors = (root_entity.get_sorted_successors() 
+                  if self.sort_links 
+                  else root_entity.successors)
+    for successor in successors:
       new_linked = self.copy_subgraph(successor, visited_entities)
       self.link_entities(new_entity, new_linked)
     
-    visited_entities[root_entity.id] = new_entity
     return new_entity
   
   @staticmethod
-  def from_dict(json_dict={}):
+  def from_dict(json_dict={}, sort_links=False):
     entities = json_dict.get('entities', {})
     links = json_dict.get('links', {})
 
-    graph = Graph()
+    graph = Graph(sort_links)
     
     # TODO validate if entities is list
     for e in entities:
