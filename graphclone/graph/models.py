@@ -1,3 +1,34 @@
+import numbers
+
+class Entity(object):
+
+  def __init__(self, id, name, description=None):
+    self.id = id
+    self.name = name
+    self.description = description
+    self.successors = set()
+    self.predecessors = set()
+
+  def __repr__(self):
+    return "Entity[{}, {}]".format(self.id, self.name)
+  
+  def add_successor(self, successor):
+    if successor is None:
+      return
+    self.successors.add(successor)
+  
+  def add_predecessor(self, predecessor):
+    if predecessor is None:
+      return
+    self.predecessors.add(predecessor)
+
+  def copy(self, cloned_id):
+    return Entity(
+      id=cloned_id,
+      name=self.name,
+      description=self.description
+    )
+
 class Graph(object):
 
   def __init__(self):
@@ -5,6 +36,9 @@ class Graph(object):
     self.next_entity_id = 1
 
   def add_entity(self, entity):
+    if entity is None:
+      return
+    
     self.entities[entity.id] = entity
     if entity.id >= self.next_entity_id:
         self.next_entity_id = entity.id + 1
@@ -16,11 +50,13 @@ class Graph(object):
     return new_entity
 
   def link_entities_by_id(self, from_id, to_id):
-    from_entity = self.entities[from_id]
-    to_entity = self.entities[to_id]
+    from_entity = self.entities.get(from_id)
+    to_entity = self.entities.get(to_id)
     self.link_entities(from_entity, to_entity)
 
   def link_entities(self, from_entity, to_entity):
+    if from_entity is None or to_entity is None:
+      return
     from_entity.add_successor(to_entity)
     to_entity.add_predecessor(from_entity)
   
@@ -48,9 +84,9 @@ class Graph(object):
     return new_entity
   
   @staticmethod
-  def from_dict(json_dict):
-    entities = json_dict.get('entities')
-    links = json_dict.get('links')
+  def from_dict(json_dict={}):
+    entities = json_dict.get('entities', {})
+    links = json_dict.get('links', {})
 
     graph = Graph()
     
@@ -66,6 +102,7 @@ class Graph(object):
     return graph
 
   def to_dict(self):
+    
     json_dict = {
       'entities': [],
       'links': [],
@@ -89,28 +126,3 @@ class Graph(object):
         })
     
     return json_dict
-
-
-class Entity(object):
-
-  def __init__(self, id, name, description):
-    self.id = id
-    self.name = name
-    self.description = description
-    self.successors = []
-    self.predecessors = []
-  
-  def add_successor(self, successor):
-    # TODO check if it doesn't exist already
-    self.successors.append(successor)
-  
-  def add_predecessor(self, predecessor):
-    # TODO check if it doesn't exist already
-    self.predecessors.append(predecessor)
-
-  def copy(self, cloned_id):
-    return Entity(
-      id=cloned_id,
-      name=self.name,
-      description=self.description
-    )
