@@ -7,10 +7,13 @@ Python script that accepts an input json containing a graph and entity ID, clone
 * Python version 2.7.* or 3.5.* (tested with these versions, but likely to work with other builds)
 
 # Running the script
-Clone this repository and from the root directory execute a command with the following format:
+Clone this repository and from the root directory of the project execute a command with the following format:
 ```sh
-$ ./execute.py <file_path> <entity_id>
+$ ./execute.py <input_file_path> <entity_id>
 ```
+
+`input_file_path` should contain a json object with `entities` and `links` (check [Input format](#input-format) for concrete example). `entity_id` should be an integer ID of an entity contained in the graph. 
+
 Concrete example:
 ```sh
 $ ./execute.py graphclone/fixtures/input.json 5
@@ -64,7 +67,7 @@ Input file needs to be in the following format for script to execute correctly:
 }
 ```
 Where links contain `from` and `to` keys that represent ids of the entities that they connect. The links are directional which means the following two objects are NOT the same and therefore valid as an input:
-```
+```json
 {
       "from": 3,
       "to": 5
